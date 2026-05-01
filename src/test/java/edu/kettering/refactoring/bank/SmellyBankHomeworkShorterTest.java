@@ -42,7 +42,7 @@ class SmellyBankHomeworkShorterDepositWithdrawTests {
                 true
         );
 
-        assertEquals(300.0, acct.balance(), 1e-9);
+        assertEquals(300.0, acct.getBalance(), 1e-9);
     }
 
     // ---------- Withdrawal tests ----------
@@ -68,7 +68,7 @@ class SmellyBankHomeworkShorterDepositWithdrawTests {
         );
 
         // 250 - 300 = -50, within overdraft limit of 100
-        assertEquals(-50.0, acct.balance(), 1e-9);
+        assertEquals(-50.0, acct.getBalance(), 1e-9);
     }
 
     @Test
@@ -92,7 +92,7 @@ class SmellyBankHomeworkShorterDepositWithdrawTests {
         );
 
         // Should remain unchanged
-        assertEquals(40.0, acct.balance(), 1e-9);
+        assertEquals(40.0, acct.getBalance(), 1e-9);
     }
 
     @Test
@@ -115,7 +115,7 @@ class SmellyBankHomeworkShorterDepositWithdrawTests {
                 true
         );
 
-        assertEquals(1200.0, acct.balance(), 1e-9);
+        assertEquals(1200.0, acct.getBalance(), 1e-9);
     }
 
     // ---------- Flagging & VIP tests ----------
@@ -140,7 +140,7 @@ class SmellyBankHomeworkShorterDepositWithdrawTests {
                 true
         );
 
-        assertTrue(acct.flagged());
+        assertTrue(acct.getFlagged());
     }
 
     @Test

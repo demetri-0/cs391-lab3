@@ -1,6 +1,10 @@
 package edu.kettering.refactoring.bank;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 
 /**
  * Refactoring Homework: Bank Accounts (Checking/Savings)
@@ -25,37 +29,48 @@ public class SmellyBankHomeworkShorter {
         protected BankAccount(String id, String owner, double bal) {
             this.id = id; this.owner = owner; this.bal = bal;
         }
-        public String id() { return id; }
-        public String owner() { return owner; }
-        public double balance() { return bal; }
-        public boolean flagged() { return flagged; }
+
+        public String getId() { return id; }
+        public String getOwner() { return owner; }
+        public double getBalance() { return bal; }
+        public boolean getFlagged() { return flagged; }
         public void setFlagged(boolean v) { flagged = v; }
-        public abstract String type();
+        public abstract String getType();
     }
 
     static class CheckingAccount extends BankAccount {
         private final double overdraft;
+
         public CheckingAccount(String id, String owner, double bal, double overdraft) {
-            super(id, owner, bal); this.overdraft = overdraft;
+            super(id, owner, bal); 
+            this.overdraft = overdraft;
         }
+
         public double overdraft() { return overdraft; }
-        public String type() { return "CHECKING"; }
+        public String getType() { return "CHECKING"; }
     }
 
     static class SavingsAccount extends BankAccount {
         private final double rate; // kept as “dead data” on purpose (smell target for students)
+
         public SavingsAccount(String id, String owner, double bal, double rate) {
-            super(id, owner, bal); this.rate = rate;
+            super(id, owner, bal); 
+            this.rate = rate;
         }
+
         public double rate() { return rate; }
-        public String type() { return "SAVINGS"; }
+        public String getType() { return "SAVINGS"; }
     }
 
     static class Txn {
         final String acctId, kind, memo; // kind: DEPOSIT/WITHDRAW ONLY
         final double amt;
+
         Txn(String acctId, String kind, double amt, String memo) {
-            this.acctId = acctId; this.kind = kind; this.amt = amt; this.memo = memo;
+            this.acctId = acctId; 
+            this.kind = kind; 
+            this.amt = amt; 
+            this.memo = memo;
         }
     }
 
@@ -113,7 +128,7 @@ public class SmellyBankHomeworkShorter {
         // loop -> map transform (accountId -> account)
         // store accounts by their id as the key
         Map<String, BankAccount> byId = new HashMap<>();
-        for (BankAccount a : inputAccounts) byId.put(a.id(), a);
+        for (BankAccount a : inputAccounts) byId.put(a.getId(), a);
 
         // loop -> filter transform (include / exclude zero-amount txns)
         List<Txn> txns = new ArrayList<>();
@@ -140,8 +155,8 @@ public class SmellyBankHomeworkShorter {
                 continue;
             }
 
-            out.append(x.kind).append(" acct=").append(a.id())
-                    .append(" owner=").append(a.owner())
+            out.append(x.kind).append(" acct=").append(a.getId())
+                    .append(" owner=").append(a.getOwner())
                     .append(" amt=").append(fmt(x.amt, digits, rounding)).append(" ").append(currency)
                     .append(" memo=").append(x.memo).append("\n");
 
@@ -173,25 +188,25 @@ public class SmellyBankHomeworkShorter {
                 a.setFlagged(true);
                 out.append("  ** FLAG large txn **\n");
             }
-            if (a.balance() >= vipBalanceThreshold) out.append("  VIP NOTE\n");
+            if (a.getBalance() >= vipBalanceThreshold) out.append("  VIP NOTE\n");
             out.append("\n");
         }
 
         out.append("-- POST-CHECKS --\n");
         for (BankAccount a : inputAccounts) {
             if (a instanceof CheckingAccount c) {
-                if (a.balance() < -c.overdraft()) { a.setFlagged(true); out.append("Flag ").append(a.id()).append(" beyond overdraft\n"); }
+                if (a.getBalance() < -c.overdraft()) { a.setFlagged(true); out.append("Flag ").append(a.getId()).append(" beyond overdraft\n"); }
             } else {
-                if (a.balance() < 0) { a.setFlagged(true); out.append("Flag ").append(a.id()).append(" negative savings\n"); }
+                if (a.getBalance() < 0) { a.setFlagged(true); out.append("Flag ").append(a.getId()).append(" negative savings\n"); }
             }
         }
 
 
         out.append("\n-- SUMMARY A --\n");
         for (BankAccount a : inputAccounts)
-            out.append(a.id()).append(" ").append(a.type()).append(" ").append(a.owner())
-                    .append(" bal=").append(fmt(a.balance(), digits, rounding))
-                    .append(a.flagged() ? " [FLAG]" : "").append("\n");
+            out.append(a.getId()).append(" ").append(a.getType()).append(" ").append(a.getOwner())
+                    .append(" bal=").append(fmt(a.getBalance(), digits, rounding))
+                    .append(a.getFlagged() ? " [FLAG]" : "").append("\n");
 
         out.append("\n-- TOTALS --\n");
         out.append("applied=").append(z).append(" skipped=").append(q)
@@ -200,10 +215,10 @@ public class SmellyBankHomeworkShorter {
         out.append("\n-- SUMMARY B --\n");
         for (int i = inputAccounts.size() - 1; i >= 0; i--) {
             BankAccount a = inputAccounts.get(i);
-            out.append("[").append(a.type()).append("] ").append(a.owner())
-                    .append(" id=").append(a.id())
-                    .append(" bal=").append(fmt(a.balance(), digits, rounding))
-                    .append(a.flagged() ? " *" : "").append("\n");
+            out.append("[").append(a.getType()).append("] ").append(a.getOwner())
+                    .append(" id=").append(a.getId())
+                    .append(" bal=").append(fmt(a.getBalance(), digits, rounding))
+                    .append(a.getFlagged() ? " *" : "").append("\n");
         }
 
         return out.toString();
