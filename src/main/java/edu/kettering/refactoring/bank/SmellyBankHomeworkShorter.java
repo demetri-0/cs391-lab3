@@ -288,32 +288,24 @@ public class SmellyBankHomeworkShorter {
                 .append(" amt=").append(fmt(transaction.amt, reportOptions.digits(), reportOptions.rounding())).append(" ").append(reportOptions.currency())
                 .append(" memo=").append(transaction.memo).append("\n");
 
+        TransactionApplicationResult transactionApplicationResult;
         if (transaction.kind.equals("DEPOSIT")) {
-            account.bal += transaction.amt;
-            appliedTransactionCount++;
-            absoluteAppliedAmountTotal += Math.abs(transaction.amt);
-            report.append("  newBal=").append(fmt(account.bal, reportOptions.digits(), reportOptions.rounding())).append("\n");
-
+            transactionApplicationResult = handleDeposit(transaction, account, reportOptions, report);
         } else if (transaction.kind.equals("WITHDRAW")) {
-            boolean ok;
-
-            if (account instanceof CheckingAccount c) ok = (account.bal - transaction.amt) >= -c.overdraft();
-            else ok = (account.bal - transaction.amt) >= 0;
-
-            if (!ok) {
-                skippedTransactionCount++;
-                report.append("  DECLINED\n");
-            } else {
-                account.bal -= transaction.amt;
-                appliedTransactionCount++;
-                absoluteAppliedAmountTotal += Math.abs(transaction.amt);
-                report.append("  newBal=").append(fmt(account.bal, reportOptions.digits(), reportOptions.rounding())).append("\n");
-            }
-
+            transactionApplicationResult = handleWithdrawal(transaction, account, reportOptions, report);
         } else {
             skippedTransactionCount++;
             report.append("  SKIP unknown kind\n");
+            transactionApplicationResult = new TransactionApplicationResult(
+                    appliedTransactionCount,
+                    skippedTransactionCount,
+                    absoluteAppliedAmountTotal
+            );
         }
+
+        appliedTransactionCount += transactionApplicationResult.appliedTransactionCount();
+        skippedTransactionCount += transactionApplicationResult.skippedTransactionCount();
+        absoluteAppliedAmountTotal += transactionApplicationResult.absoluteAppliedAmountTotal();
 
         if (Math.abs(transaction.amt) >= processingOptions.flagLargeTransactionThreshold()) {
             account.setFlagged(true);
@@ -321,6 +313,59 @@ public class SmellyBankHomeworkShorter {
         }
         if (account.getBalance() >= processingOptions.vipBalanceThreshold()) report.append("  VIP NOTE\n");
         report.append("\n");
+
+        return new TransactionApplicationResult(
+                appliedTransactionCount,
+                skippedTransactionCount,
+                absoluteAppliedAmountTotal
+        );
+    }
+
+    static TransactionApplicationResult handleDeposit(
+            Transaction transaction,
+            BankAccount account,
+            ReportOptions reportOptions,
+            StringBuilder report
+    ) {
+        int appliedTransactionCount = 0;
+        int skippedTransactionCount = 0;
+        double absoluteAppliedAmountTotal = 0.0;
+
+        account.bal += transaction.amt;
+        appliedTransactionCount++;
+        absoluteAppliedAmountTotal += Math.abs(transaction.amt);
+        report.append("  newBal=").append(fmt(account.bal, reportOptions.digits(), reportOptions.rounding())).append("\n");
+
+        return new TransactionApplicationResult(
+                appliedTransactionCount,
+                skippedTransactionCount,
+                absoluteAppliedAmountTotal
+        );
+    }
+
+    static TransactionApplicationResult handleWithdrawal(
+            Transaction transaction,
+            BankAccount account,
+            ReportOptions reportOptions,
+            StringBuilder report
+    ) {
+        int appliedTransactionCount = 0;
+        int skippedTransactionCount = 0;
+        double absoluteAppliedAmountTotal = 0.0;
+        boolean ok;
+
+        if (account instanceof CheckingAccount c) ok = (account.bal - transaction.amt) >= -c.overdraft();
+        else ok = (account.bal - transaction.amt) >= 0;
+
+        if (!ok) {
+            skippedTransactionCount++;
+            report.append("  DECLINED\n");
+        } else {
+            account.bal -= transaction.amt;
+            appliedTransactionCount++;
+            absoluteAppliedAmountTotal += Math.abs(transaction.amt);
+            report.append("  newBal=").append(fmt(account.bal, reportOptions.digits(), reportOptions.rounding())).append("\n");
+        }
 
         return new TransactionApplicationResult(
                 appliedTransactionCount,
