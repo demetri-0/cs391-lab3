@@ -177,10 +177,9 @@ public class SmellyBankHomeworkShorter {
             else if (reportOptions.debug()) report.append("[dbg] filtered zero transaction for ").append(transaction.acctId).append("\n");
         }
 
-        // mysterious vars
-        int z = 0;      // z = applied transaction count
-        int q = 0;      // q = skipped transaction count
-        double t = 0.0; // t = sum of absolute applied amounts (summary metric)
+        int appliedTransactionCount = 0;
+        int skippedTransactionCount = 0;
+        double absoluteAppliedAmountTotal = 0.0;
 
         report.append("\n-- APPLY --\n");
         for (Transaction transaction : transactions) {
@@ -188,7 +187,7 @@ public class SmellyBankHomeworkShorter {
 
             // if can't find bank account
             if (account == null) {
-                q++;
+                skippedTransactionCount++;
                 if (reportOptions.debug()) report.append("[dbg] unknown ").append(transaction.acctId).append("\n");
                 continue;
             }
@@ -201,7 +200,9 @@ public class SmellyBankHomeworkShorter {
          
             if (transaction.kind.equals("DEPOSIT")) {
                 // update the bank account balance with a deposit
-                account.bal += transaction.amt; z++; t += Math.abs(transaction.amt);
+                account.bal += transaction.amt;
+                appliedTransactionCount++;
+                absoluteAppliedAmountTotal += Math.abs(transaction.amt);
                 report.append("  newBal=").append(fmt(account.bal, reportOptions.digits(), reportOptions.rounding())).append("\n");
 
             } else if (transaction.kind.equals("WITHDRAW")) {
@@ -211,14 +212,16 @@ public class SmellyBankHomeworkShorter {
                 if (account instanceof CheckingAccount c) ok = (account.bal - transaction.amt) >= -c.overdraft();
                 else ok = (account.bal - transaction.amt) >= 0;
 
-                if (!ok) { q++; report.append("  DECLINED\n"); }
+                if (!ok) { skippedTransactionCount++; report.append("  DECLINED\n"); }
                 else {
-                    account.bal -= transaction.amt; z++; t += Math.abs(transaction.amt);
+                    account.bal -= transaction.amt;
+                    appliedTransactionCount++;
+                    absoluteAppliedAmountTotal += Math.abs(transaction.amt);
                     report.append("  newBal=").append(fmt(account.bal, reportOptions.digits(), reportOptions.rounding())).append("\n");
                 }
 
             } else {
-                q++;
+                skippedTransactionCount++;
                 report.append("  SKIP unknown kind\n");
             }
 
@@ -247,8 +250,8 @@ public class SmellyBankHomeworkShorter {
                     .append(account.getFlagged() ? " [FLAG]" : "").append("\n");
 
         report.append("\n-- TOTALS --\n");
-        report.append("applied=").append(z).append(" skipped=").append(q)
-                .append(" absTotal=").append(fmt(t, reportOptions.digits(), reportOptions.rounding())).append(" ").append(reportOptions.currency()).append("\n");
+        report.append("applied=").append(appliedTransactionCount).append(" skipped=").append(skippedTransactionCount)
+                .append(" absTotal=").append(fmt(absoluteAppliedAmountTotal, reportOptions.digits(), reportOptions.rounding())).append(" ").append(reportOptions.currency()).append("\n");
 
         report.append("\n-- SUMMARY B --\n");
         for (int i = inputAccounts.size() - 1; i >= 0; i--) {
