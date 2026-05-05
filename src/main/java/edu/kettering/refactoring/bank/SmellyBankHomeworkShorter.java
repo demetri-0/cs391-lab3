@@ -216,23 +216,19 @@ public class SmellyBankHomeworkShorter {
 
 
         report.append("\n-- SUMMARY A --\n");
-        for (BankAccount account : inputAccounts)
-            report.append(account.getId()).append(" ").append(account.getType()).append(" ").append(account.getOwner())
-                    .append(" bal=").append(fmt(account.getBalance(), reportOptions.digits(), reportOptions.rounding()))
-                    .append(account.getFlagged() ? " [FLAG]" : "").append("\n");
+        appendSummaryA(inputAccounts, reportOptions, report);
 
         report.append("\n-- TOTALS --\n");
-        report.append("applied=").append(appliedTransactionCount).append(" skipped=").append(skippedTransactionCount)
-                .append(" absTotal=").append(fmt(absoluteAppliedAmountTotal, reportOptions.digits(), reportOptions.rounding())).append(" ").append(reportOptions.currency()).append("\n");
+        appendTotals(
+                appliedTransactionCount,
+                skippedTransactionCount,
+                absoluteAppliedAmountTotal,
+                reportOptions,
+                report
+        );
 
         report.append("\n-- SUMMARY B --\n");
-        for (int i = inputAccounts.size() - 1; i >= 0; i--) {
-            BankAccount account = inputAccounts.get(i);
-            report.append("[").append(account.getType()).append("] ").append(account.getOwner())
-                    .append(" id=").append(account.getId())
-                    .append(" bal=").append(fmt(account.getBalance(), reportOptions.digits(), reportOptions.rounding()))
-                    .append(account.getFlagged() ? " *" : "").append("\n");
-        }
+        appendSummaryB(inputAccounts, reportOptions, report);
 
         return report.toString();
     }
@@ -382,6 +378,43 @@ public class SmellyBankHomeworkShorter {
                 }
             }
         }
+    }
+
+    static void appendSummaryA(
+            List<BankAccount> inputAccounts,
+            ReportOptions reportOptions,
+            StringBuilder report
+    ) {
+        for (BankAccount account : inputAccounts) {
+            report.append(account.getId()).append(" ").append(account.getType()).append(" ").append(account.getOwner())
+                    .append(" bal=").append(fmt(account.getBalance(), reportOptions.digits(), reportOptions.rounding()))
+                    .append(account.getFlagged() ? " [FLAG]" : "").append("\n");
+        }
+    }
+
+    static void appendSummaryB(
+            List<BankAccount> inputAccounts,
+            ReportOptions reportOptions,
+            StringBuilder report
+    ) {
+        for (int i = inputAccounts.size() - 1; i >= 0; i--) {
+            BankAccount account = inputAccounts.get(i);
+            report.append("[").append(account.getType()).append("] ").append(account.getOwner())
+                    .append(" id=").append(account.getId())
+                    .append(" bal=").append(fmt(account.getBalance(), reportOptions.digits(), reportOptions.rounding()))
+                    .append(account.getFlagged() ? " *" : "").append("\n");
+        }
+    }
+
+    static void appendTotals(
+            int appliedTransactionCount,
+            int skippedTransactionCount,
+            double absoluteAppliedAmountTotal,
+            ReportOptions reportOptions,
+            StringBuilder report
+    ) {
+        report.append("applied=").append(appliedTransactionCount).append(" skipped=").append(skippedTransactionCount)
+                .append(" absTotal=").append(fmt(absoluteAppliedAmountTotal, reportOptions.digits(), reportOptions.rounding())).append(" ").append(reportOptions.currency()).append("\n");
     }
 
     static String fmt(double v, int digits, boolean rounding) {
