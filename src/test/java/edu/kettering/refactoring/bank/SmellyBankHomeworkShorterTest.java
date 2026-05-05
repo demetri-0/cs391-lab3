@@ -1,11 +1,12 @@
 package edu.kettering.refactoring.bank;
 
-import org.junit.jupiter.api.Test;
-
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.junit.jupiter.api.Test;
 
 
 class SmellyBankHomeworkShorterDepositWithdrawTests {
@@ -14,9 +15,9 @@ class SmellyBankHomeworkShorterDepositWithdrawTests {
     private List<SmellyBankHomeworkShorter.BankAccount> baseAccounts() {
         List<SmellyBankHomeworkShorter.BankAccount> accounts = new ArrayList<>();
         accounts.add(new SmellyBankHomeworkShorter.CheckingAccount("C-100", "A. Chen", 250, 100));
-        accounts.add(new SmellyBankHomeworkShorter.SavingsAccount("S-200", "B. Patel", 1200, 0.02));
+        accounts.add(new SmellyBankHomeworkShorter.SavingsAccount("S-200", "B. Patel", 1200));
         accounts.add(new SmellyBankHomeworkShorter.CheckingAccount("C-300", "C. Rivera", 40, 50));
-        accounts.add(new SmellyBankHomeworkShorter.SavingsAccount("S-400", "D. Smith", 9000, 0.03));
+        accounts.add(new SmellyBankHomeworkShorter.SavingsAccount("S-400", "D. Smith", 9000));
         return accounts;
     }
 

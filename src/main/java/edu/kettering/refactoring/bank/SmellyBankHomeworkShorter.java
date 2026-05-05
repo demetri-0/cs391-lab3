@@ -51,14 +51,11 @@ public class SmellyBankHomeworkShorter {
     }
 
     static class SavingsAccount extends BankAccount {
-        private final double rate; // kept as “dead data” on purpose (smell target for students)
 
-        public SavingsAccount(String id, String owner, double bal, double rate) {
+        public SavingsAccount(String id, String owner, double bal) {
             super(id, owner, bal); 
-            this.rate = rate;
         }
 
-        public double rate() { return rate; }
         public String getType() { return "SAVINGS"; }
     }
 
@@ -77,9 +74,9 @@ public class SmellyBankHomeworkShorter {
     public static void main(String[] args) {
         List<BankAccount> accounts = new ArrayList<>();
         accounts.add(new CheckingAccount("C-100", "A. Chen", 250, 100));
-        accounts.add(new SavingsAccount("S-200", "B. Patel", 1200, 0.02));
+        accounts.add(new SavingsAccount("S-200", "B. Patel", 1200));
         accounts.add(new CheckingAccount("C-300", "C. Rivera", 40, 50));
-        accounts.add(new SavingsAccount("S-400", "D. Smith", 9000, 0.03));
+        accounts.add(new SavingsAccount("S-400", "D. Smith", 9000));
 
            // Five transactions chosen to exercise all behavior paths
         List<Transaction> transactions = List.of(
