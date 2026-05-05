@@ -110,6 +110,26 @@ public class SmellyBankHomeworkShorter {
         public boolean rounding() { return rounding; }
     }
 
+    static class TransactionApplicationResult {
+        private final int appliedTransactionCount;
+        private final int skippedTransactionCount;
+        private final double absoluteAppliedAmountTotal;
+
+        TransactionApplicationResult(
+                int appliedTransactionCount,
+                int skippedTransactionCount,
+                double absoluteAppliedAmountTotal
+        ) {
+            this.appliedTransactionCount = appliedTransactionCount;
+            this.skippedTransactionCount = skippedTransactionCount;
+            this.absoluteAppliedAmountTotal = absoluteAppliedAmountTotal;
+        }
+
+        public int appliedTransactionCount() { return appliedTransactionCount; }
+        public int skippedTransactionCount() { return skippedTransactionCount; }
+        public double absoluteAppliedAmountTotal() { return absoluteAppliedAmountTotal; }
+    }
+
     public static void main(String[] args) {
         List<BankAccount> accounts = new ArrayList<>();
         accounts.add(new CheckingAccount("C-100", "A. Chen", 250, 100));
@@ -179,54 +199,16 @@ public class SmellyBankHomeworkShorter {
 
         report.append("\n-- APPLY --\n");
         for (Transaction transaction : transactions) {
-            BankAccount account = accountsById.get(transaction.acctId);
-
-            // if can't find bank account
-            if (account == null) {
-                skippedTransactionCount++;
-                if (reportOptions.debug()) report.append("[dbg] unknown ").append(transaction.acctId).append("\n");
-                continue;
-            }
-
-            report.append(transaction.kind).append(" acct=").append(account.getId())
-                    .append(" owner=").append(account.getOwner())
-                    .append(" amt=").append(fmt(transaction.amt, reportOptions.digits(), reportOptions.rounding())).append(" ").append(reportOptions.currency())
-                    .append(" memo=").append(transaction.memo).append("\n");
-
-         
-            if (transaction.kind.equals("DEPOSIT")) {
-                // update the bank account balance with a deposit
-                account.bal += transaction.amt;
-                appliedTransactionCount++;
-                absoluteAppliedAmountTotal += Math.abs(transaction.amt);
-                report.append("  newBal=").append(fmt(account.bal, reportOptions.digits(), reportOptions.rounding())).append("\n");
-
-            } else if (transaction.kind.equals("WITHDRAW")) {
-                boolean ok;
-
-                // update the bank account balance with a withdrawal
-                if (account instanceof CheckingAccount c) ok = (account.bal - transaction.amt) >= -c.overdraft();
-                else ok = (account.bal - transaction.amt) >= 0;
-
-                if (!ok) { skippedTransactionCount++; report.append("  DECLINED\n"); }
-                else {
-                    account.bal -= transaction.amt;
-                    appliedTransactionCount++;
-                    absoluteAppliedAmountTotal += Math.abs(transaction.amt);
-                    report.append("  newBal=").append(fmt(account.bal, reportOptions.digits(), reportOptions.rounding())).append("\n");
-                }
-
-            } else {
-                skippedTransactionCount++;
-                report.append("  SKIP unknown kind\n");
-            }
-
-            if (Math.abs(transaction.amt) >= processingOptions.flagLargeTransactionThreshold()) {
-                account.setFlagged(true);
-                report.append("  ** FLAG large transaction **\n");
-            }
-            if (account.getBalance() >= processingOptions.vipBalanceThreshold()) report.append("  VIP NOTE\n");
-            report.append("\n");
+            TransactionApplicationResult transactionApplicationResult = applyTransaction(
+                    transaction,
+                    accountsById,
+                    processingOptions,
+                    reportOptions,
+                    report
+            );
+            appliedTransactionCount += transactionApplicationResult.appliedTransactionCount();
+            skippedTransactionCount += transactionApplicationResult.skippedTransactionCount();
+            absoluteAppliedAmountTotal += transactionApplicationResult.absoluteAppliedAmountTotal();
         }
 
         report.append("-- POST-CHECKS --\n");
@@ -276,6 +258,75 @@ public class SmellyBankHomeworkShorter {
             }
         }
         return transactions;
+    }
+
+    static TransactionApplicationResult applyTransaction(
+            Transaction transaction,
+            Map<String, BankAccount> accountsById,
+            BatchProcessingOptions processingOptions,
+            ReportOptions reportOptions,
+            StringBuilder report
+    ) {
+        int appliedTransactionCount = 0;
+        int skippedTransactionCount = 0;
+        double absoluteAppliedAmountTotal = 0.0;
+
+        BankAccount account = accountsById.get(transaction.acctId);
+
+        if (account == null) {
+            skippedTransactionCount++;
+            if (reportOptions.debug()) report.append("[dbg] unknown ").append(transaction.acctId).append("\n");
+            return new TransactionApplicationResult(
+                    appliedTransactionCount,
+                    skippedTransactionCount,
+                    absoluteAppliedAmountTotal
+            );
+        }
+
+        report.append(transaction.kind).append(" acct=").append(account.getId())
+                .append(" owner=").append(account.getOwner())
+                .append(" amt=").append(fmt(transaction.amt, reportOptions.digits(), reportOptions.rounding())).append(" ").append(reportOptions.currency())
+                .append(" memo=").append(transaction.memo).append("\n");
+
+        if (transaction.kind.equals("DEPOSIT")) {
+            account.bal += transaction.amt;
+            appliedTransactionCount++;
+            absoluteAppliedAmountTotal += Math.abs(transaction.amt);
+            report.append("  newBal=").append(fmt(account.bal, reportOptions.digits(), reportOptions.rounding())).append("\n");
+
+        } else if (transaction.kind.equals("WITHDRAW")) {
+            boolean ok;
+
+            if (account instanceof CheckingAccount c) ok = (account.bal - transaction.amt) >= -c.overdraft();
+            else ok = (account.bal - transaction.amt) >= 0;
+
+            if (!ok) {
+                skippedTransactionCount++;
+                report.append("  DECLINED\n");
+            } else {
+                account.bal -= transaction.amt;
+                appliedTransactionCount++;
+                absoluteAppliedAmountTotal += Math.abs(transaction.amt);
+                report.append("  newBal=").append(fmt(account.bal, reportOptions.digits(), reportOptions.rounding())).append("\n");
+            }
+
+        } else {
+            skippedTransactionCount++;
+            report.append("  SKIP unknown kind\n");
+        }
+
+        if (Math.abs(transaction.amt) >= processingOptions.flagLargeTransactionThreshold()) {
+            account.setFlagged(true);
+            report.append("  ** FLAG large transaction **\n");
+        }
+        if (account.getBalance() >= processingOptions.vipBalanceThreshold()) report.append("  VIP NOTE\n");
+        report.append("\n");
+
+        return new TransactionApplicationResult(
+                appliedTransactionCount,
+                skippedTransactionCount,
+                absoluteAppliedAmountTotal
+        );
     }
 
     static String fmt(double v, int digits, boolean rounding) {
