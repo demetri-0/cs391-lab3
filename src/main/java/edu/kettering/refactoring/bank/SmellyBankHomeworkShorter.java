@@ -163,19 +163,15 @@ public class SmellyBankHomeworkShorter {
         StringBuilder report = new StringBuilder();
         report.append("=== BANK BATCH REPORT ===\n");
 
-        // loop -> map transform (accountId -> account)
-        // store accounts by their id as the key
         Map<String, BankAccount> accountsById = new HashMap<>();
         for (BankAccount account : inputAccounts) accountsById.put(account.getId(), account);
 
-        // loop -> filter transform (include / exclude zero-amount transactions)
-        List<Transaction> transactions = new ArrayList<>();
-        for (Transaction transaction : inputTransactions) {
-            // if includeZeroAmountTransactions is true OR the amount is not zero
-            //then record the transaction
-            if (processingOptions.includeZeroAmountTransactions() || transaction.amt != 0.0) transactions.add(transaction);
-            else if (reportOptions.debug()) report.append("[dbg] filtered zero transaction for ").append(transaction.acctId).append("\n");
-        }
+        List<Transaction> transactions = filterTransactions(
+                inputTransactions,
+                processingOptions,
+                reportOptions,
+                report
+        );
 
         int appliedTransactionCount = 0;
         int skippedTransactionCount = 0;
@@ -263,6 +259,23 @@ public class SmellyBankHomeworkShorter {
         }
 
         return report.toString();
+    }
+
+    static List<Transaction> filterTransactions(
+            List<Transaction> inputTransactions,
+            BatchProcessingOptions processingOptions,
+            ReportOptions reportOptions,
+            StringBuilder report
+    ) {
+        List<Transaction> transactions = new ArrayList<>();
+        for (Transaction transaction : inputTransactions) {
+            if (processingOptions.includeZeroAmountTransactions() || transaction.amt != 0.0) {
+                transactions.add(transaction);
+            } else if (reportOptions.debug()) {
+                report.append("[dbg] filtered zero transaction for ").append(transaction.acctId).append("\n");
+            }
+        }
+        return transactions;
     }
 
     static String fmt(double v, int digits, boolean rounding) {
