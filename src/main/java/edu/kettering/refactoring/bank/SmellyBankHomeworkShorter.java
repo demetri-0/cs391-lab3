@@ -139,7 +139,7 @@ public class SmellyBankHomeworkShorter {
         accounts.add(new CheckingAccount("C-300", "C. Rivera", 40, 50));
         accounts.add(new SavingsAccount("S-400", "D. Smith", 9000));
 
-           // Five transactions chosen to exercise all behavior paths
+        // Five transactions chosen to exercise all behavior paths
         List<Transaction> transactions = List.of(
         // 1) Normal withdrawal from checking (allowed)
         new Transaction("C-100", "WITHDRAW", 75, "ATM withdrawal"),
@@ -175,7 +175,6 @@ public class SmellyBankHomeworkShorter {
         ));
     }
 
-    // Long function + long-ish parameter list + mixed responsibilities (intentionally)
     public static String processDailyBatch(
             List<BankAccount> inputAccounts,
             List<Transaction> inputTransactions,
