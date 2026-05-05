@@ -47,6 +47,7 @@ public class SmellyBankHomeworkShorter {
         }
 
         public double overdraft() { return overdraft; }
+        @Override
         public String getType() { return "CHECKING"; }
     }
 
@@ -56,6 +57,7 @@ public class SmellyBankHomeworkShorter {
             super(id, owner, bal); 
         }
 
+        @Override
         public String getType() { return "SAVINGS"; }
     }
 
@@ -279,18 +281,18 @@ public class SmellyBankHomeworkShorter {
                 .append(" memo=").append(transaction.memo).append("\n");
 
         TransactionApplicationResult transactionApplicationResult;
-        if (transaction.kind.equals("DEPOSIT")) {
-            transactionApplicationResult = handleDeposit(transaction, account, reportOptions, report);
-        } else if (transaction.kind.equals("WITHDRAW")) {
-            transactionApplicationResult = handleWithdrawal(transaction, account, reportOptions, report);
-        } else {
-            skippedTransactionCount++;
-            report.append("  SKIP unknown kind\n");
-            transactionApplicationResult = new TransactionApplicationResult(
-                    appliedTransactionCount,
-                    skippedTransactionCount,
-                    absoluteAppliedAmountTotal
-            );
+        switch (transaction.kind) {
+            case "DEPOSIT" -> transactionApplicationResult = handleDeposit(transaction, account, reportOptions, report);
+            case "WITHDRAW" -> transactionApplicationResult = handleWithdrawal(transaction, account, reportOptions, report);
+            default -> {
+                skippedTransactionCount++;
+                report.append("  SKIP unknown kind\n");
+                transactionApplicationResult = new TransactionApplicationResult(
+                        appliedTransactionCount,
+                        skippedTransactionCount,
+                        absoluteAppliedAmountTotal
+                );
+            }
         }
 
         appliedTransactionCount += transactionApplicationResult.appliedTransactionCount();
