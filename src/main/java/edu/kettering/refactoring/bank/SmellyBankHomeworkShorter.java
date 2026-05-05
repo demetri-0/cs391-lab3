@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Refactoring Homework: Bank Accounts (Checking/Savings)
@@ -240,15 +241,15 @@ public class SmellyBankHomeworkShorter {
             ReportOptions reportOptions,
             StringBuilder report
     ) {
-        List<Transaction> transactions = new ArrayList<>();
-        for (Transaction transaction : inputTransactions) {
-            if (processingOptions.includeZeroAmountTransactions() || transaction.amt != 0.0) {
-                transactions.add(transaction);
-            } else if (reportOptions.debug()) {
-                report.append("[dbg] filtered zero transaction for ").append(transaction.acctId).append("\n");
-            }
-        }
-        return transactions;
+        return inputTransactions.stream()
+                .filter(transaction -> {
+                    boolean shouldInclude = processingOptions.includeZeroAmountTransactions() || transaction.amt != 0.0;
+                    if (!shouldInclude && reportOptions.debug()) {
+                        report.append("[dbg] filtered zero transaction for ").append(transaction.acctId).append("\n");
+                    }
+                    return shouldInclude;
+                })
+                .collect(Collectors.toList());
     }
 
     static TransactionApplicationResult applyTransaction(
