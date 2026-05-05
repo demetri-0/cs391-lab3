@@ -71,6 +71,45 @@ public class SmellyBankHomeworkShorter {
         }
     }
 
+    static class BatchProcessingOptions {
+        private final boolean includeZeroAmountTransactions;
+        private final double flagLargeTransactionThreshold;
+        private final double vipBalanceThreshold;
+
+        BatchProcessingOptions(
+                boolean includeZeroAmountTransactions,
+                double flagLargeTransactionThreshold,
+                double vipBalanceThreshold
+        ) {
+            this.includeZeroAmountTransactions = includeZeroAmountTransactions;
+            this.flagLargeTransactionThreshold = flagLargeTransactionThreshold;
+            this.vipBalanceThreshold = vipBalanceThreshold;
+        }
+
+        public boolean includeZeroAmountTransactions() { return includeZeroAmountTransactions; }
+        public double flagLargeTransactionThreshold() { return flagLargeTransactionThreshold; }
+        public double vipBalanceThreshold() { return vipBalanceThreshold; }
+    }
+
+    static class ReportOptions {
+        private final boolean debug;
+        private final String currency;
+        private final int digits;
+        private final boolean rounding;
+
+        ReportOptions(boolean debug, String currency, int digits, boolean rounding) {
+            this.debug = debug;
+            this.currency = currency;
+            this.digits = digits;
+            this.rounding = rounding;
+        }
+
+        public boolean debug() { return debug; }
+        public String currency() { return currency; }
+        public int digits() { return digits; }
+        public boolean rounding() { return rounding; }
+    }
+
     public static void main(String[] args) {
         List<BankAccount> accounts = new ArrayList<>();
         accounts.add(new CheckingAccount("C-100", "A. Chen", 250, 100));
@@ -95,15 +134,22 @@ public class SmellyBankHomeworkShorter {
         // 5) Small deposit to verify normal deposit path
         new Transaction("C-100", "DEPOSIT", 25, "Cash deposit")
 );
+        BatchProcessingOptions batchProcessingOptions = new BatchProcessingOptions(
+                false,
+                1000.0,
+                5000.0
+        );
+        ReportOptions reportOptions = new ReportOptions(
+                true,
+                "USD",
+                2,
+                true
+        );
+
         System.out.println(processDailyBatch(
                 accounts, transactions,
-                false,   // includeZeroAmountTransactions
-                1000.0,  // flagLargeTransactionThreshold
-                5000.0,  // vipBalanceThreshold
-                true,    // debug
-                "USD",   // currency
-                2,       // digits
-                true     // rounding
+                batchProcessingOptions,
+                reportOptions
         ));
     }
 
@@ -111,13 +157,8 @@ public class SmellyBankHomeworkShorter {
     public static String processDailyBatch(
             List<BankAccount> inputAccounts,
             List<Transaction> inputTransactions,
-            boolean includeZeroAmountTransactions,
-            double flagLargeTransactionThreshold,
-            double vipBalanceThreshold,
-            boolean debug,
-            String currency,
-            int digits,
-            boolean rounding
+            BatchProcessingOptions processingOptions,
+            ReportOptions reportOptions
     ) {
         StringBuilder report = new StringBuilder();
         report.append("=== BANK BATCH REPORT ===\n");
@@ -132,8 +173,8 @@ public class SmellyBankHomeworkShorter {
         for (Transaction transaction : inputTransactions) {
             // if includeZeroAmountTransactions is true OR the amount is not zero
             //then record the transaction
-            if (includeZeroAmountTransactions || transaction.amt != 0.0) transactions.add(transaction);
-            else if (debug) report.append("[dbg] filtered zero transaction for ").append(transaction.acctId).append("\n");
+            if (processingOptions.includeZeroAmountTransactions() || transaction.amt != 0.0) transactions.add(transaction);
+            else if (reportOptions.debug()) report.append("[dbg] filtered zero transaction for ").append(transaction.acctId).append("\n");
         }
 
         // mysterious vars
@@ -148,20 +189,20 @@ public class SmellyBankHomeworkShorter {
             // if can't find bank account
             if (account == null) {
                 q++;
-                if (debug) report.append("[dbg] unknown ").append(transaction.acctId).append("\n");
+                if (reportOptions.debug()) report.append("[dbg] unknown ").append(transaction.acctId).append("\n");
                 continue;
             }
 
             report.append(transaction.kind).append(" acct=").append(account.getId())
                     .append(" owner=").append(account.getOwner())
-                    .append(" amt=").append(fmt(transaction.amt, digits, rounding)).append(" ").append(currency)
+                    .append(" amt=").append(fmt(transaction.amt, reportOptions.digits(), reportOptions.rounding())).append(" ").append(reportOptions.currency())
                     .append(" memo=").append(transaction.memo).append("\n");
 
          
             if (transaction.kind.equals("DEPOSIT")) {
                 // update the bank account balance with a deposit
                 account.bal += transaction.amt; z++; t += Math.abs(transaction.amt);
-                report.append("  newBal=").append(fmt(account.bal, digits, rounding)).append("\n");
+                report.append("  newBal=").append(fmt(account.bal, reportOptions.digits(), reportOptions.rounding())).append("\n");
 
             } else if (transaction.kind.equals("WITHDRAW")) {
                 boolean ok;
@@ -173,7 +214,7 @@ public class SmellyBankHomeworkShorter {
                 if (!ok) { q++; report.append("  DECLINED\n"); }
                 else {
                     account.bal -= transaction.amt; z++; t += Math.abs(transaction.amt);
-                    report.append("  newBal=").append(fmt(account.bal, digits, rounding)).append("\n");
+                    report.append("  newBal=").append(fmt(account.bal, reportOptions.digits(), reportOptions.rounding())).append("\n");
                 }
 
             } else {
@@ -181,11 +222,11 @@ public class SmellyBankHomeworkShorter {
                 report.append("  SKIP unknown kind\n");
             }
 
-            if (Math.abs(transaction.amt) >= flagLargeTransactionThreshold) {
+            if (Math.abs(transaction.amt) >= processingOptions.flagLargeTransactionThreshold()) {
                 account.setFlagged(true);
                 report.append("  ** FLAG large transaction **\n");
             }
-            if (account.getBalance() >= vipBalanceThreshold) report.append("  VIP NOTE\n");
+            if (account.getBalance() >= processingOptions.vipBalanceThreshold()) report.append("  VIP NOTE\n");
             report.append("\n");
         }
 
@@ -202,19 +243,19 @@ public class SmellyBankHomeworkShorter {
         report.append("\n-- SUMMARY A --\n");
         for (BankAccount account : inputAccounts)
             report.append(account.getId()).append(" ").append(account.getType()).append(" ").append(account.getOwner())
-                    .append(" bal=").append(fmt(account.getBalance(), digits, rounding))
+                    .append(" bal=").append(fmt(account.getBalance(), reportOptions.digits(), reportOptions.rounding()))
                     .append(account.getFlagged() ? " [FLAG]" : "").append("\n");
 
         report.append("\n-- TOTALS --\n");
         report.append("applied=").append(z).append(" skipped=").append(q)
-                .append(" absTotal=").append(fmt(t, digits, rounding)).append(" ").append(currency).append("\n");
+                .append(" absTotal=").append(fmt(t, reportOptions.digits(), reportOptions.rounding())).append(" ").append(reportOptions.currency()).append("\n");
 
         report.append("\n-- SUMMARY B --\n");
         for (int i = inputAccounts.size() - 1; i >= 0; i--) {
             BankAccount account = inputAccounts.get(i);
             report.append("[").append(account.getType()).append("] ").append(account.getOwner())
                     .append(" id=").append(account.getId())
-                    .append(" bal=").append(fmt(account.getBalance(), digits, rounding))
+                    .append(" bal=").append(fmt(account.getBalance(), reportOptions.digits(), reportOptions.rounding()))
                     .append(account.getFlagged() ? " *" : "").append("\n");
         }
 

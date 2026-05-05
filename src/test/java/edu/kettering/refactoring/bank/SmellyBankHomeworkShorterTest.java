@@ -21,6 +21,14 @@ class SmellyBankHomeworkShorterDepositWithdrawTests {
         return accounts;
     }
 
+    private SmellyBankHomeworkShorter.BatchProcessingOptions defaultProcessingOptions() {
+        return new SmellyBankHomeworkShorter.BatchProcessingOptions(false, 1000.0, 5000.0);
+    }
+
+    private SmellyBankHomeworkShorter.ReportOptions defaultReportOptions() {
+        return new SmellyBankHomeworkShorter.ReportOptions(false, "USD", 2, true);
+    }
+
     // ---------- Deposit tests ----------
 
     @Test
@@ -34,13 +42,8 @@ class SmellyBankHomeworkShorterDepositWithdrawTests {
 
         SmellyBankHomeworkShorter.processDailyBatch(
                 accounts, transactions,
-                false,
-                1000.0,
-                5000.0,
-                false,
-                "USD",
-                2,
-                true
+                defaultProcessingOptions(),
+                defaultReportOptions()
         );
 
         assertEquals(300.0, acct.getBalance(), 1e-9);
@@ -59,13 +62,8 @@ class SmellyBankHomeworkShorterDepositWithdrawTests {
 
         SmellyBankHomeworkShorter.processDailyBatch(
                 accounts, transactions,
-                false,
-                1000.0,
-                5000.0,
-                false,
-                "USD",
-                2,
-                true
+                defaultProcessingOptions(),
+                defaultReportOptions()
         );
 
         // 250 - 300 = -50, within overdraft limit of 100
@@ -83,13 +81,8 @@ class SmellyBankHomeworkShorterDepositWithdrawTests {
 
         SmellyBankHomeworkShorter.processDailyBatch(
                 accounts, transactions,
-                false,
-                1000.0,
-                5000.0,
-                false,
-                "USD",
-                2,
-                true
+                defaultProcessingOptions(),
+                defaultReportOptions()
         );
 
         // Should remain unchanged
@@ -107,13 +100,8 @@ class SmellyBankHomeworkShorterDepositWithdrawTests {
 
         SmellyBankHomeworkShorter.processDailyBatch(
                 accounts, transactions,
-                false,
-                1000.0,
-                5000.0,
-                false,
-                "USD",
-                2,
-                true
+                defaultProcessingOptions(),
+                defaultReportOptions()
         );
 
         assertEquals(1200.0, acct.getBalance(), 1e-9);
@@ -132,13 +120,8 @@ class SmellyBankHomeworkShorterDepositWithdrawTests {
 
         SmellyBankHomeworkShorter.processDailyBatch(
                 accounts, transactions,
-                false,
-                1000.0,  // flag threshold
-                5000.0,
-                false,
-                "USD",
-                2,
-                true
+                defaultProcessingOptions(),
+                defaultReportOptions()
         );
 
         assertTrue(acct.getFlagged());
@@ -154,13 +137,8 @@ class SmellyBankHomeworkShorterDepositWithdrawTests {
 
         String report = SmellyBankHomeworkShorter.processDailyBatch(
                 accounts, transactions,
-                false,
-                1000.0,
-                5000.0,  // VIP threshold
-                false,
-                "USD",
-                2,
-                true
+                defaultProcessingOptions(),
+                defaultReportOptions()
         );
 
         assertTrue(report.contains("VIP NOTE"));
@@ -178,13 +156,8 @@ class SmellyBankHomeworkShorterDepositWithdrawTests {
 
         String report = SmellyBankHomeworkShorter.processDailyBatch(
                 accounts, transactions,
-                false,
-                1000.0,
-                5000.0,
-                false,
-                "USD",
-                2,
-                true
+                defaultProcessingOptions(),
+                defaultReportOptions()
         );
 
         assertAll(
