@@ -27,12 +27,12 @@ class SmellyBankHomeworkShorterDepositWithdrawTests {
         var accounts = baseAccounts();
         var acct = (SmellyBankHomeworkShorter.BankAccount) accounts.get(0); // C-100
 
-        List<SmellyBankHomeworkShorter.Txn> txns = List.of(
-                new SmellyBankHomeworkShorter.Txn("C-100", "DEPOSIT", 50, "cash")
+        List<SmellyBankHomeworkShorter.Transaction> transactions = List.of(
+                new SmellyBankHomeworkShorter.Transaction("C-100", "DEPOSIT", 50, "cash")
         );
 
         SmellyBankHomeworkShorter.processDailyBatch(
-                accounts, txns,
+                accounts, transactions,
                 false,
                 1000.0,
                 5000.0,
@@ -52,12 +52,12 @@ class SmellyBankHomeworkShorterDepositWithdrawTests {
         var accounts = baseAccounts();
         var acct = (SmellyBankHomeworkShorter.BankAccount) accounts.get(0); // C-100
 
-        List<SmellyBankHomeworkShorter.Txn> txns = List.of(
-                new SmellyBankHomeworkShorter.Txn("C-100", "WITHDRAW", 300, "rent")
+        List<SmellyBankHomeworkShorter.Transaction> transactions = List.of(
+                new SmellyBankHomeworkShorter.Transaction("C-100", "WITHDRAW", 300, "rent")
         );
 
         SmellyBankHomeworkShorter.processDailyBatch(
-                accounts, txns,
+                accounts, transactions,
                 false,
                 1000.0,
                 5000.0,
@@ -76,12 +76,12 @@ class SmellyBankHomeworkShorterDepositWithdrawTests {
         var accounts = baseAccounts();
         var acct = (SmellyBankHomeworkShorter.BankAccount) accounts.get(2); // C-300
 
-        List<SmellyBankHomeworkShorter.Txn> txns = List.of(
-                new SmellyBankHomeworkShorter.Txn("C-300", "WITHDRAW", 120, "billpay")
+        List<SmellyBankHomeworkShorter.Transaction> transactions = List.of(
+                new SmellyBankHomeworkShorter.Transaction("C-300", "WITHDRAW", 120, "billpay")
         );
 
         SmellyBankHomeworkShorter.processDailyBatch(
-                accounts, txns,
+                accounts, transactions,
                 false,
                 1000.0,
                 5000.0,
@@ -100,12 +100,12 @@ class SmellyBankHomeworkShorterDepositWithdrawTests {
         var accounts = baseAccounts();
         var acct = (SmellyBankHomeworkShorter.BankAccount) accounts.get(1); // S-200
 
-        List<SmellyBankHomeworkShorter.Txn> txns = List.of(
-                new SmellyBankHomeworkShorter.Txn("S-200", "WITHDRAW", 1300, "transfer")
+        List<SmellyBankHomeworkShorter.Transaction> transactions = List.of(
+                new SmellyBankHomeworkShorter.Transaction("S-200", "WITHDRAW", 1300, "transfer")
         );
 
         SmellyBankHomeworkShorter.processDailyBatch(
-                accounts, txns,
+                accounts, transactions,
                 false,
                 1000.0,
                 5000.0,
@@ -125,12 +125,12 @@ class SmellyBankHomeworkShorterDepositWithdrawTests {
         var accounts = baseAccounts();
         var acct = (SmellyBankHomeworkShorter.BankAccount) accounts.get(3); // S-400
 
-        List<SmellyBankHomeworkShorter.Txn> txns = List.of(
-                new SmellyBankHomeworkShorter.Txn("S-400", "DEPOSIT", 1500, "bonus")
+        List<SmellyBankHomeworkShorter.Transaction> transactions = List.of(
+                new SmellyBankHomeworkShorter.Transaction("S-400", "DEPOSIT", 1500, "bonus")
         );
 
         SmellyBankHomeworkShorter.processDailyBatch(
-                accounts, txns,
+                accounts, transactions,
                 false,
                 1000.0,  // flag threshold
                 5000.0,
@@ -147,12 +147,12 @@ class SmellyBankHomeworkShorterDepositWithdrawTests {
     void highBalance_shouldTriggerVipNoteInReport() {
         var accounts = baseAccounts();
 
-        List<SmellyBankHomeworkShorter.Txn> txns = List.of(
-                new SmellyBankHomeworkShorter.Txn("S-400", "DEPOSIT", 1500, "bonus")
+        List<SmellyBankHomeworkShorter.Transaction> transactions = List.of(
+                new SmellyBankHomeworkShorter.Transaction("S-400", "DEPOSIT", 1500, "bonus")
         );
 
         String report = SmellyBankHomeworkShorter.processDailyBatch(
-                accounts, txns,
+                accounts, transactions,
                 false,
                 1000.0,
                 5000.0,  // VIP threshold
@@ -171,12 +171,12 @@ class SmellyBankHomeworkShorterDepositWithdrawTests {
     void report_shouldContainSummarySections() {
         var accounts = baseAccounts();
 
-        List<SmellyBankHomeworkShorter.Txn> txns = List.of(
-                new SmellyBankHomeworkShorter.Txn("C-100", "DEPOSIT", 10, "test")
+        List<SmellyBankHomeworkShorter.Transaction> transactions = List.of(
+                new SmellyBankHomeworkShorter.Transaction("C-100", "DEPOSIT", 10, "test")
         );
 
         String report = SmellyBankHomeworkShorter.processDailyBatch(
-                accounts, txns,
+                accounts, transactions,
                 false,
                 1000.0,
                 5000.0,

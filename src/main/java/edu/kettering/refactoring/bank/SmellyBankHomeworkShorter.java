@@ -62,11 +62,11 @@ public class SmellyBankHomeworkShorter {
         public String getType() { return "SAVINGS"; }
     }
 
-    static class Txn {
+    static class Transaction {
         final String acctId, kind, memo; // kind: DEPOSIT/WITHDRAW ONLY
         final double amt;
 
-        Txn(String acctId, String kind, double amt, String memo) {
+        Transaction(String acctId, String kind, double amt, String memo) {
             this.acctId = acctId; 
             this.kind = kind; 
             this.amt = amt; 
@@ -82,26 +82,26 @@ public class SmellyBankHomeworkShorter {
         accounts.add(new SavingsAccount("S-400", "D. Smith", 9000, 0.03));
 
            // Five transactions chosen to exercise all behavior paths
-        List<Txn> txns = List.of(
+        List<Transaction> transactions = List.of(
         // 1) Normal withdrawal from checking (allowed)
-        new Txn("C-100", "WITHDRAW", 75, "ATM withdrawal"),
+        new Transaction("C-100", "WITHDRAW", 75, "ATM withdrawal"),
 
         // 2) Withdrawal from checking that exceeds overdraft (DECLINED)
-        new Txn("C-300", "WITHDRAW", 120, "Billpay overdraft test"),
+        new Transaction("C-300", "WITHDRAW", 120, "Billpay overdraft test"),
 
         // 3) Withdrawal from savings that would go negative (DECLINED)
-        new Txn("S-200", "WITHDRAW", 1300, "Savings overdraft test"),
+        new Transaction("S-200", "WITHDRAW", 1300, "Savings overdraft test"),
 
         // 4) Large deposit that triggers FLAG + VIP NOTE
-        new Txn("S-400", "DEPOSIT", 1500, "Bonus deposit"),
+        new Transaction("S-400", "DEPOSIT", 1500, "Bonus deposit"),
 
         // 5) Small deposit to verify normal deposit path
-        new Txn("C-100", "DEPOSIT", 25, "Cash deposit")
+        new Transaction("C-100", "DEPOSIT", 25, "Cash deposit")
 );
         System.out.println(processDailyBatch(
-                accounts, txns,
-                false,   // includeZeroAmountTxns
-                1000.0,  // flagLargeTxnThreshold
+                accounts, transactions,
+                false,   // includeZeroAmountTransactions
+                1000.0,  // flagLargeTransactionThreshold
                 5000.0,  // vipBalanceThreshold
                 true,    // debug
                 "USD",   // currency
@@ -113,9 +113,9 @@ public class SmellyBankHomeworkShorter {
     // Long function + long-ish parameter list + mixed responsibilities (intentionally)
     public static String processDailyBatch(
             List<BankAccount> inputAccounts,
-            List<Txn> inputTxns,
-            boolean includeZeroAmountTxns,
-            double flagLargeTxnThreshold,
+            List<Transaction> inputTransactions,
+            boolean includeZeroAmountTransactions,
+            double flagLargeTransactionThreshold,
             double vipBalanceThreshold,
             boolean debug,
             String currency,
@@ -130,13 +130,13 @@ public class SmellyBankHomeworkShorter {
         Map<String, BankAccount> byId = new HashMap<>();
         for (BankAccount a : inputAccounts) byId.put(a.getId(), a);
 
-        // loop -> filter transform (include / exclude zero-amount txns)
-        List<Txn> txns = new ArrayList<>();
-        for (Txn x : inputTxns) {
-            // if includeZeroAmountTxns is true OR the amount is not zero
+        // loop -> filter transform (include / exclude zero-amount transactions)
+        List<Transaction> transactions = new ArrayList<>();
+        for (Transaction transaction : inputTransactions) {
+            // if includeZeroAmountTransactions is true OR the amount is not zero
             //then record the transaction
-            if (includeZeroAmountTxns || x.amt != 0.0) txns.add(x);
-            else if (debug) out.append("[dbg] filtered zero txn for ").append(x.acctId).append("\n");
+            if (includeZeroAmountTransactions || transaction.amt != 0.0) transactions.add(transaction);
+            else if (debug) out.append("[dbg] filtered zero transaction for ").append(transaction.acctId).append("\n");
         }
 
         // mysterious vars
@@ -145,37 +145,37 @@ public class SmellyBankHomeworkShorter {
         double t = 0.0; // t = sum of absolute applied amounts (summary metric)
 
         out.append("\n-- APPLY --\n");
-        for (Txn x : txns) {
-            BankAccount a = byId.get(x.acctId);
+        for (Transaction transaction : transactions) {
+            BankAccount a = byId.get(transaction.acctId);
 
             // if can't find bank account
             if (a == null) {
                 q++;
-                if (debug) out.append("[dbg] unknown ").append(x.acctId).append("\n");
+                if (debug) out.append("[dbg] unknown ").append(transaction.acctId).append("\n");
                 continue;
             }
 
-            out.append(x.kind).append(" acct=").append(a.getId())
+            out.append(transaction.kind).append(" acct=").append(a.getId())
                     .append(" owner=").append(a.getOwner())
-                    .append(" amt=").append(fmt(x.amt, digits, rounding)).append(" ").append(currency)
-                    .append(" memo=").append(x.memo).append("\n");
+                    .append(" amt=").append(fmt(transaction.amt, digits, rounding)).append(" ").append(currency)
+                    .append(" memo=").append(transaction.memo).append("\n");
 
          
-            if (x.kind.equals("DEPOSIT")) {
+            if (transaction.kind.equals("DEPOSIT")) {
                 // update the bank account balance with a deposit
-                a.bal += x.amt; z++; t += Math.abs(x.amt);
+                a.bal += transaction.amt; z++; t += Math.abs(transaction.amt);
                 out.append("  newBal=").append(fmt(a.bal, digits, rounding)).append("\n");
 
-            } else if (x.kind.equals("WITHDRAW")) {
+            } else if (transaction.kind.equals("WITHDRAW")) {
                 boolean ok;
 
                 // update the bank account balance with a withdrawal
-                if (a instanceof CheckingAccount c) ok = (a.bal - x.amt) >= -c.overdraft();
-                else ok = (a.bal - x.amt) >= 0;
+                if (a instanceof CheckingAccount c) ok = (a.bal - transaction.amt) >= -c.overdraft();
+                else ok = (a.bal - transaction.amt) >= 0;
 
                 if (!ok) { q++; out.append("  DECLINED\n"); }
                 else {
-                    a.bal -= x.amt; z++; t += Math.abs(x.amt);
+                    a.bal -= transaction.amt; z++; t += Math.abs(transaction.amt);
                     out.append("  newBal=").append(fmt(a.bal, digits, rounding)).append("\n");
                 }
 
@@ -184,9 +184,9 @@ public class SmellyBankHomeworkShorter {
                 out.append("  SKIP unknown kind\n");
             }
 
-            if (Math.abs(x.amt) >= flagLargeTxnThreshold) {
+            if (Math.abs(transaction.amt) >= flagLargeTransactionThreshold) {
                 a.setFlagged(true);
-                out.append("  ** FLAG large txn **\n");
+                out.append("  ** FLAG large transaction **\n");
             }
             if (a.getBalance() >= vipBalanceThreshold) out.append("  VIP NOTE\n");
             out.append("\n");
