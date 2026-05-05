@@ -212,13 +212,7 @@ public class SmellyBankHomeworkShorter {
         }
 
         report.append("-- POST-CHECKS --\n");
-        for (BankAccount account : inputAccounts) {
-            if (account instanceof CheckingAccount c) {
-                if (account.getBalance() < -c.overdraft()) { account.setFlagged(true); report.append("Flag ").append(account.getId()).append(" beyond overdraft\n"); }
-            } else {
-                if (account.getBalance() < 0) { account.setFlagged(true); report.append("Flag ").append(account.getId()).append(" negative savings\n"); }
-            }
-        }
+        runPostChecks(inputAccounts, report);
 
 
         report.append("\n-- SUMMARY A --\n");
@@ -372,6 +366,22 @@ public class SmellyBankHomeworkShorter {
                 skippedTransactionCount,
                 absoluteAppliedAmountTotal
         );
+    }
+
+    static void runPostChecks(List<BankAccount> inputAccounts, StringBuilder report) {
+        for (BankAccount account : inputAccounts) {
+            if (account instanceof CheckingAccount c) {
+                if (account.getBalance() < -c.overdraft()) {
+                    account.setFlagged(true);
+                    report.append("Flag ").append(account.getId()).append(" beyond overdraft\n");
+                }
+            } else {
+                if (account.getBalance() < 0) {
+                    account.setFlagged(true);
+                    report.append("Flag ").append(account.getId()).append(" negative savings\n");
+                }
+            }
+        }
     }
 
     static String fmt(double v, int digits, boolean rounding) {
