@@ -185,8 +185,8 @@ public class SmellyBankHomeworkShorter {
         StringBuilder report = new StringBuilder();
         report.append("=== BANK BATCH REPORT ===\n");
 
-        Map<String, BankAccount> accountsById = new HashMap<>();
-        for (BankAccount account : inputAccounts) accountsById.put(account.getId(), account);
+        Map<String, BankAccount> accountsById = inputAccounts.stream()
+                .collect(Collectors.toMap(BankAccount::getId, account -> account, (first, second) -> second, HashMap::new));
 
         List<Transaction> transactions = filterTransactions(
                 inputTransactions,
@@ -275,10 +275,7 @@ public class SmellyBankHomeworkShorter {
             );
         }
 
-        report.append(transaction.kind).append(" acct=").append(account.getId())
-                .append(" owner=").append(account.getOwner())
-                .append(" amt=").append(fmt(transaction.amt, reportOptions.digits(), reportOptions.rounding())).append(" ").append(reportOptions.currency())
-                .append(" memo=").append(transaction.memo).append("\n");
+        appendTransactionHeader(transaction, account, reportOptions, report);
 
         TransactionApplicationResult transactionApplicationResult;
         switch (transaction.kind) {
@@ -299,11 +296,7 @@ public class SmellyBankHomeworkShorter {
         skippedTransactionCount += transactionApplicationResult.skippedTransactionCount();
         absoluteAppliedAmountTotal += transactionApplicationResult.absoluteAppliedAmountTotal();
 
-        if (Math.abs(transaction.amt) >= processingOptions.flagLargeTransactionThreshold()) {
-            account.setFlagged(true);
-            report.append("  ** FLAG large transaction **\n");
-        }
-        if (account.getBalance() >= processingOptions.vipBalanceThreshold()) report.append("  VIP NOTE\n");
+        appendFlagAndVipNotes(transaction, account, processingOptions, report);
         report.append("\n");
 
         return new TransactionApplicationResult(
@@ -364,6 +357,33 @@ public class SmellyBankHomeworkShorter {
                 skippedTransactionCount,
                 absoluteAppliedAmountTotal
         );
+    }
+
+    static void appendTransactionHeader(
+            Transaction transaction,
+            BankAccount account,
+            ReportOptions reportOptions,
+            StringBuilder report
+    ) {
+        report.append(transaction.kind).append(" acct=").append(account.getId())
+                .append(" owner=").append(account.getOwner())
+                .append(" amt=").append(fmt(transaction.amt, reportOptions.digits(), reportOptions.rounding())).append(" ").append(reportOptions.currency())
+                .append(" memo=").append(transaction.memo).append("\n");
+    }
+
+    static void appendFlagAndVipNotes(
+            Transaction transaction,
+            BankAccount account,
+            BatchProcessingOptions processingOptions,
+            StringBuilder report
+    ) {
+        if (Math.abs(transaction.amt) >= processingOptions.flagLargeTransactionThreshold()) {
+            account.setFlagged(true);
+            report.append("  ** FLAG large transaction **\n");
+        }
+        if (account.getBalance() >= processingOptions.vipBalanceThreshold()) {
+            report.append("  VIP NOTE\n");
+        }
     }
 
     static void runPostChecks(List<BankAccount> inputAccounts, StringBuilder report) {
